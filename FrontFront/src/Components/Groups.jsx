@@ -1,4 +1,5 @@
 import React , { useState, useEffect} from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const getData = (setGroups) => {
     const arr = [
@@ -23,15 +24,26 @@ function DisplayGroups()
         !getData(setGroups);
     }, []);
 
+      const navigate = useNavigate();
+
+  const changeToInformationPage = (groupName) => {
+    const index = groups.findIndex(group => group.name === groupName);
+    navigate(`/group-info${groupName}`, 
+        {state: {
+        id: groups[index],
+    }
+    });
+  };
+
     return (
     <div>
         <div className = 'groups-container'>
             {groups.map((group, index) => {
                 return (
-                <div key = {index}className = 'group-row'>
+                <div key = {index} className = 'group-row'>
                     <div >Groups name: {group.name}</div>
                     <div >Groups money: {group.money}</div>
-                    <button>Info</button>
+                    <button onClick={() =>changeToInformationPage(group.name)}>Info</button>
                     <br></br>
                     <br></br>
                 </div>
