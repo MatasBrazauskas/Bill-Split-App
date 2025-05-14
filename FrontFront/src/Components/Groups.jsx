@@ -9,6 +9,10 @@ const getData = (setGroups) => {
     setGroups(temp => [...arr]);
 }
 
+const addGroup = (title, setGroups) => {
+    setGroups(temp => [...temp, {name: title, money: 0}]);
+}
+
 function DisplayGroups()
 {
     const [groups, setGroups] = useState([]);
@@ -25,8 +29,11 @@ function DisplayGroups()
             {groups.map((group, index) => {
                 return (
                 <div key = {index}className = 'group-row'>
-                    <div >{group.name}</div>
-                    <div >{group.money}</div>
+                    <div >Groups name: {group.name}</div>
+                    <div >Groups money: {group.money}</div>
+                    <button>Info</button>
+                    <br></br>
+                    <br></br>
                 </div>
                 );})}
         </div>
@@ -38,7 +45,7 @@ function DisplayGroups()
         </div>) : 
         (<div className = 'add-group-form'>
             <input type = 'text' placeholder = 'Group Name' onChange = {(e) => setTitle(e.target.value)}/>
-            <button>Add Group</button>
+            <button onClick={() => {setStatus(i => !i), addGroup(title, setGroups)}}>Add Group</button>
             <button onClick={() => {setStatus(i => !i), alert(title)}}>Cancel</button>
         </div>)}
     </div>
