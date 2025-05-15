@@ -34,16 +34,22 @@ function DisplayGroups() {
     getData();
   }, []);
 
-  const addGroup = (title) => {
+  const addGroup = async (title) => {
     const newGroup = {
       groupName: title,
-      members: "",
+      members: "empty",
       oweMoney: "empty"
     }
-    axios.post("https://localhost:7076/api/Group", newGroup);
+    const responce = await axios.post("https://localhost:7076/api/Group", newGroup);
     getData();
     setGroups(prevGroups => [...prevGroups, newGroup]);
   };
+
+  const deleteGroup = async (index) => {
+    const responce = await axios.delete(`https://localhost:7076/api/Group/${index + 1}`);
+    getData();
+    setGroups(prevGroups => prevGroups.filter(group => group.id !== id));
+  }
 
   return (
     <div>
@@ -53,6 +59,7 @@ function DisplayGroups() {
             <div>Group name: {group.groupName}</div>
             <div>Group money: {group.oweMoney}</div>
             <button onClick={() => changeToInformationPage(group.groupName)}>Info</button>
+            <button onClick = {() => {deleteGroup(index); alert(index)}}>Delete Group</button>
             <br /><br />
           </div>
         ))}
