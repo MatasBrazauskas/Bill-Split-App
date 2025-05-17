@@ -11,40 +11,40 @@ function DisplayGroups() {
 
   const changeToInformationPage = (index) => {
     const id = groups[index].id;
-      navigate(`/group-info/${id}`);//, { state: { group: groups[index] } });
+    navigate(`/group-info/${id}`);
   };
 
   const getData = async () => {
-  const { data } = await axios.get("https://localhost:7076/api/App");
+    const { data } = await axios.get("https://localhost:7076/api/App/group");
 
-  const groupsWithArrayMembers = data.map(group => ({
-    ...group,
-  }));
+    const groupsWithArrayMembers = data.map(group => ({
+      ...group,
+    }));
 
-  setGroups(groupsWithArrayMembers);
-};
+    setGroups(groupsWithArrayMembers);
+  };
 
   useEffect(() => {
     getData();
   }, []);
 
   const addGroup = async (title) => {
-  const newGroup = {
-    groupName: title,
-    oweMoney: "0"
+    const newGroup = {
+      groupName: title,
+      oweMoney: "0"
+    };
+    const response = await axios.post("https://localhost:7076/api/App/group", newGroup);
+    setGroups(prevGroups => [...prevGroups, response.data]);
   };
-  const response = await axios.post("https://localhost:7076/api/App/group", newGroup);
-  setGroups(prevGroups => [...prevGroups, response.data]);
-};
 
   const deleteGroup = async (id) => {
-  try {
-    await axios.delete(`https://localhost:7076/api/App/group/${id}`);
-    setGroups(prevGroups => prevGroups.filter(group => group.id !== id));
-  } catch (error) {
-    console.error("Failed to delete group:", error);
-  }
-};
+    try {
+      await axios.delete(`https://localhost:7076/api/App/group/${id}`);
+      setGroups(prevGroups => prevGroups.filter(group => group.id !== id));
+    } catch (error) {
+      console.error("Failed to delete group:", error);
+    }
+  };
 
   return (
     <div>
