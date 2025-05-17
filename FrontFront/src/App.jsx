@@ -10,7 +10,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<GroupList />} />
-      <Route path="/group-info/:group" element={<GroupDetail />} />
+      <Route path="/group-info/:id" element={<GroupDetail />} />
     </Routes>
   );
 }

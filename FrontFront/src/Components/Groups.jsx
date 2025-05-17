@@ -9,47 +9,42 @@ function DisplayGroups() {
 
   const navigate = useNavigate();
 
-  const changeToInformationPage = (groupName) => {
-    const index = groups.findIndex(group => group.groupName === groupName);
-    if (index !== -1) {
-      navigate(`/group-info/${groupName}`, {
-        state: { group: groups[index] },
-      });
-    }
+  const changeToInformationPage = (index) => {
+    const id = groups[index].id;
+      navigate(`/group-info/${id}`);//, { state: { group: groups[index] } });
   };
 
   const getData = async () => {
-      const { data } = await axios.get("https://localhost:7076/api/Group");
-      console.log(data);    
+  const { data } = await axios.get("https://localhost:7076/api/App");
 
-      const groupsWithArrayMembers = data.map(group => ({
-        ...group,
-        members: group.members.split(",").map(name => name.trim()),
-      }));
+  const groupsWithArrayMembers = data.map(group => ({
+    ...group,
+  }));
 
-      setGroups(groupsWithArrayMembers);
-  };
+  setGroups(groupsWithArrayMembers);
+};
 
   useEffect(() => {
     getData();
   }, []);
 
   const addGroup = async (title) => {
-    const newGroup = {
-      groupName: title,
-      members: "empty",
-      oweMoney: "empty"
-    }
-    const responce = await axios.post("https://localhost:7076/api/Group", newGroup);
-    getData();
-    setGroups(prevGroups => [...prevGroups, newGroup]);
+  const newGroup = {
+    groupName: title,
+    oweMoney: "0"
   };
+  const response = await axios.post("https://localhost:7076/api/App/group", newGroup);
+  setGroups(prevGroups => [...prevGroups, response.data]);
+};
 
-  const deleteGroup = async (index) => {
-    const responce = await axios.delete(`https://localhost:7076/api/Group/${index + 1}`);
-    getData();
+  const deleteGroup = async (id) => {
+  try {
+    await axios.delete(`https://localhost:7076/api/App/group/${id}`);
     setGroups(prevGroups => prevGroups.filter(group => group.id !== id));
+  } catch (error) {
+    console.error("Failed to delete group:", error);
   }
+};
 
   return (
     <div>
@@ -58,8 +53,8 @@ function DisplayGroups() {
           <div key={index} className='group-row'>
             <div>Group name: {group.groupName}</div>
             <div>Group money: {group.oweMoney}</div>
-            <button onClick={() => changeToInformationPage(group.groupName)}>Info</button>
-            <button onClick = {() => {deleteGroup(index); alert(index)}}>Delete Group</button>
+            <button onClick={() => changeToInformationPage(index)}>Info</button>
+            <button onClick={() => deleteGroup(group.id)}>Delete Group</button>
             <br /><br />
           </div>
         ))}
@@ -81,7 +76,7 @@ function DisplayGroups() {
           <button onClick={() => {
             addGroup(title);
             setStatus(true);
-            setTitle(''); // clear input after adding
+            setTitle('');
           }}>
             Add Group
           </button>
