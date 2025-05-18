@@ -50,7 +50,7 @@ function NewTransaction() {
                 }
             }
         );
-        console.log(response.data);
+
         setPayersName('');
         setPayeesName('');
         setAmount(0);

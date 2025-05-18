@@ -51,8 +51,6 @@ function Group() {
         console.log(id);
 
         const finalized = await axios.get(`https://localhost:7076/api/App/transactions/is_finalized/${id}`);
-        console.log(finalized.data);
-
         setFinalize(finalized.data);
     };
 
@@ -120,7 +118,6 @@ function Group() {
 
     const finalizePayments = async () => {
         if(payAmount === getAmount && payAmount !== 0 && getAmount !== 0) {
-            console.log(id);
             await axios.post(`https://localhost:7076/api/App/transactions/finalize/${id}`);
             setFinalize(true);
         }
@@ -174,8 +171,7 @@ function Group() {
                             />
                             <button
                                 className="btn btn-primary"
-                                onClick={() => changeGroupsMoney(newMoney)}
-                            >
+                                onClick={() => changeGroupsMoney(newMoney)}>
                                 Change Money To Pay
                             </button>
                         </div>
@@ -263,8 +259,7 @@ function Group() {
                                         onClick={() => {
                                             setAddName("");
                                             setAddMemberState(true);
-                                        }}
-                                    >
+                                        }}>
                                         Add Member
                                     </button>
 
@@ -310,8 +305,7 @@ function Group() {
                                                 addNewPayer(addName);
                                                 setAddName("");
                                                 setAddMemberState(false);
-                                            }}
-                                        >
+                                            }}>
                                             Add Member
                                         </button>
                                     </div>
