@@ -18,11 +18,18 @@ function Group() {
 
     const navigate = useNavigate();
 
+    // 0 - equaly, 1 - procent, 2- dynamic
+    const [distributionIndex, setDistributionIndex] = useState(-1);
+
+    const [payAmount, setPayAmount] = useState(0);
+    const [getAmount, setGetAmount] = useState(0);
+    const [finalize, setFinalize] = useState(false);
+
     const addNewPayer = async (name) => {
         const newPayer = { name, inDepth: inDebt ? "1" : "0", owedAmount: 0 };
         setInDebt(false);
 
-        const response = await axios.post(`https://localhost:7076/api/App/members/${id}`,newPayer);
+        const response = await axios.post(`https://localhost:7076/api/App/members/${id}`, newPayer);
         setMembers((updated) => [...updated, response.data]);
     };
 
@@ -36,15 +43,17 @@ function Group() {
     };
 
     const getData = async () => {
-        const { data } = await axios.get(
-            `https://localhost:7076/api/App/members/${id}`
-        );
-        setMembers(data);
+        const mem = await axios.get(`https://localhost:7076/api/App/members/${id}`);
+        setMembers(mem.data);
 
-        const response = await axios.get(
-            `https://localhost:7076/api/App/group/${id}`
-        );
+        const response = await axios.get(`https://localhost:7076/api/App/group/${id}`);
         setGroupsInfo(response.data);
+        console.log(id);
+
+        const finalized = await axios.get(`https://localhost:7076/api/App/transactions/is_finalized/${id}`);
+        console.log(finalized.data);
+
+        setFinalize(finalized.data);
     };
 
     const changeGroupsMoney = async (money) => {
@@ -58,42 +67,79 @@ function Group() {
         setNewMoney("");
     };
 
-    const setOweMoney = async (obj) => {
-        const responce = await axios.put(
-            `https://localhost:7076/api/App/members/update?groupId=${id}&name=${obj.name}&newValue=${newMoney}`
-        );
-
-        setMembers((updated) =>
-            updated.map((member) =>
-                member.name === obj.name ? { ...member, owedAmount: newMoney } : member
-            )
-        );
-        setNewMoney("");
-    };
-
     const distributeMoneyEqually = async () => {
-        const response = await axios.post(`https://localhost:7076/api/App/members/equally/${id}`, groupsInfo.oweMoney);
+        await axios.put(
+            `https://localhost:7076/api/App/members/equally/${id}`,
+            parseInt(groupsInfo.oweMoney),
+            {
+                headers:
+                {
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+        fetchSums();
+        setDistributionIndex(-1);
+        setNewMoney("");
         getData();
     };
 
-    const [payAmount, setPayAmount] = useState(0);
-    const [getAmount, setGetAmount] = useState(0);
+    const distributeMoneyByPercentage = async (obj) => {
+        if (distributionIndex !== 1) {
+            setDistributionIndex(1);
+        } else {
+            const response = await axios.put(
+                `https://localhost:7076/api/App/members/procent/${id}?name=${obj.name}&amount=${parseInt(groupsInfo.oweMoney)}&procent=${parseInt(newMoney)}`,
+                obj,
+                {
+                    headers: { "Content-Type": "application/json" }
+                }
+            );
+
+            setDistributionIndex(-1);
+            setNewMoney("");
+            getData();
+        }
+    };
+
+
+    const distributeMoneyByDynamic = async (obj) => {
+        if (distributionIndex !== 2) {
+            setDistributionIndex(2);
+        }
+        else {
+            const responce = await axios.put(
+                `https://localhost:7076/api/App/members/dynamic/${id}?name=${obj.name}&newValue=${newMoney}`
+            );
+
+            setDistributionIndex(-1);
+            setNewMoney("");
+            getData();
+        }
+    };
+
+    const finalizePayments = async () => {
+        if(payAmount === getAmount && payAmount !== 0 && getAmount !== 0) {
+            console.log(id);
+            await axios.post(`https://localhost:7076/api/App/transactions/finalize/${id}`);
+            setFinalize(true);
+        }
+    }
+
+    const fetchSums = async () => {
+        const pay = await axios.get(
+            `https://localhost:7076/api/App/members/payers_sum/${id}`
+        );
+        const get = await axios.get(
+            `https://localhost:7076/api/App/members/owner_sum/${id}`
+        );
+        setPayAmount(pay.data);
+        setGetAmount(get.data);
+    };
 
     useEffect(() => {
-        const fetchSums = async () => {
-            const pay = await axios.get(
-                `https://localhost:7076/api/App/members/payers_sum/${id}`
-            );
-            const get = await axios.get(
-                `https://localhost:7076/api/App/members/owner_sum/${id}`
-            );
-            setPayAmount(pay.data);
-            setGetAmount(get.data);
-        };
         fetchSums();
-        console.log(payAmount);
-        console.log(getAmount);
-    }, [distributeMoney]);
+    }, [distributionIndex]);
 
     useEffect(() => {
         getData();
@@ -107,9 +153,10 @@ function Group() {
         <div className="container mt-4">
             <div className="card mb-4">
                 <div className="card-body">
-                        <button className="btn btn-danger" onClick={() => navigate('/')}>
-                            Go Back To Groups Page
-                        </button>
+                    <button className="btn btn-secondary" onClick={() => navigate('/')}>
+                        Go Back To Groups Page
+                    </button>
+
                     <h2 className="card-title">Group Name: {groupsInfo.groupName}</h2>
                     <p className="card-text">Money To Pay: {groupsInfo.oweMoney}</p>
                 </div>
@@ -148,36 +195,41 @@ function Group() {
                                         {obj.owedAmount}
                                     </p>
 
-                                    {distributeMoney && (
+                                    {(distributeMoney && distributionIndex >= 1 && !finalize) && (
                                         <div className="input-group">
                                             <input
                                                 type="text"
                                                 className="form-control"
-                                                placeholder="Enter Money To Distribute"
+                                                placeholder={distributionIndex === 1 ? "Enter Percentage - [0-100]" : "Enter Money To Distribute - Whole Number"}
                                                 onChange={(e) => setNewMoney(e.target.value)}
                                             />
-                                            {parseInt(obj.owedAmount) <= 0 ? (
-                                                <div className="d-flex gap-2">
-                                                    {console.log(obj.owedAmount)}
-                                                    <button
-                                                        className="btn btn-success"
-                                                        onClick={() => setOweMoney(obj)}
-                                                    >
-                                                        Distribute Money
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div>Money Is Set!</div>
-                                            )}
+
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    className="btn btn-success"
+                                                    onClick={() => distributionIndex === 1 ? distributeMoneyByPercentage(obj) : distributeMoneyByDynamic(obj)}
+                                                >
+                                                    Distribute By {distributionIndex === 1 ? "Percentage" : "Dynamic"} Money
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
+                                    {!finalize &&
+                                        <button
+                                            className="btn btn-danger"
+                                            onClick={() => deletePlayer(obj)}>
+                                            Delete Member
+                                        </button>
+                                    }
 
-                                    <button
-                                        className="btn btn-danger"
-                                        onClick={() => deletePlayer(obj)}
-                                    >
-                                        Delete Player
-                                    </button>
+                                    {(finalize && obj.owedAmount === 0) && 
+                                    <div>
+                                        <div>Member Is Payed Off</div>
+                                        <button className = 'btn btn-success' onClick = {() => deletePlayer(obj)}>
+                                            Delete Member 
+                                        </button>
+                                    </div>
+                                    }
                                 </div>
                             </div>
                         ))}
@@ -187,18 +239,24 @@ function Group() {
                             <div>Amount of money will be geted: {getAmount}</div>
                         </div>
 
-                        {distributeMoney && 
-                        <div>
-                            <div>How To Distribute Money?</div>
-                            <button className="btn btn-succses" onClick={() => distributeMoneyEqually()}>Equally</button>
-                            <button className="btn btn-success">Percentage</button>
-                            <button className="btn btn-succses">Dynamic</button>
-                            <button className="btn btn-danger" onClick={() => setDistributeMoney(false)}>Cancel</button>
-                        </div>
+                        {distributeMoney &&
+                            <div>
+                                <div>How To Distribute Money?</div>
+                                <button className="btn btn-succses" onClick={() => distributeMoneyEqually()}>Equally</button>
+                                <button className="btn btn-success" onClick={() => distributeMoneyByPercentage()}>Percentage</button>
+                                <button className="btn btn-succses" onClick={() => distributeMoneyByDynamic()}>Dynamic</button>
+                                <button className="btn btn-danger" onClick={() => setDistributeMoney(false)}>Cancel</button>
+                            </div>
                         }
 
+                        {finalize && 
+                        <div>
+                            <button className = 'btn btn-success' onClick = {() => navigate(`/transactions/${id}`)}>
+                                Transactions Page</button>
+                        </div>}
+
                         <div className="mt-4">
-                            {!distributeMoney ? (
+                            {!distributeMoney && !finalize ? (
                                 <div className="d-flex gap-2">
                                     <button
                                         className="btn btn-primary"
@@ -215,6 +273,10 @@ function Group() {
                                         onClick={() => setDistributeMoney(true)}
                                     >
                                         Distribute Money
+                                    </button>
+
+                                    <button className = "btn btn-warning" onClick={() => finalizePayments()}>
+                                        Finalize The Payments 
                                     </button>
                                 </div>
                             ) : null}
