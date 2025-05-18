@@ -117,7 +117,8 @@ function Group() {
     };
 
     const finalizePayments = async () => {
-        if(payAmount === getAmount && payAmount !== 0 && getAmount !== 0) {
+        console.log(payAmount, getAmount, parseInt(groupsInfo.oweMoney));
+        if(payAmount === getAmount && payAmount !== 0 && getAmount !== 0 && parseInt(groupsInfo.oweMoney) === payAmount) {
             await axios.post(`https://localhost:7076/api/App/transactions/finalize/${id}`);
             setFinalize(true);
         }
@@ -172,7 +173,7 @@ function Group() {
                             <button
                                 className="btn btn-primary"
                                 onClick={() => changeGroupsMoney(newMoney)}>
-                                Change Money To Pay
+                                Set Money To Pay
                             </button>
                         </div>
                     </div>
@@ -238,9 +239,9 @@ function Group() {
                         {distributeMoney &&
                             <div>
                                 <div>How To Distribute Money?</div>
-                                <button className="btn btn-succses" onClick={() => distributeMoneyEqually()}>Equally</button>
+                                <button className="btn btn-success" onClick={() => distributeMoneyEqually()}>Equally</button>
                                 <button className="btn btn-success" onClick={() => distributeMoneyByPercentage()}>Percentage</button>
-                                <button className="btn btn-succses" onClick={() => distributeMoneyByDynamic()}>Dynamic</button>
+                                <button className="btn btn-success" onClick={() => distributeMoneyByDynamic()}>Dynamic</button>
                                 <button className="btn btn-danger" onClick={() => setDistributeMoney(false)}>Cancel</button>
                             </div>
                         }
